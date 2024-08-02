@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import matplotlib.font_manager as font_manager
+import matplotlib.font_manager as fm
 import geopandas as gpd
 import numpy as np
 import argparse
@@ -21,6 +21,14 @@ def json_coordinates(data):
     else:
         raise ValueError("Invalid JSON data")
 
+def font_by_name(font_name):
+    font_paths = fm.findSystemFonts(fontpaths=None, fontext='ttf')
+    for font_path in font_paths:
+        font = fm.FontProperties(fname=font_path)
+        if font.get_name().lower() == font_name.lower():
+            return font_path
+    return None
+
 def plot_anim(args):
     # Configuration
     PATH = Path(args.file).resolve()
@@ -33,6 +41,7 @@ def plot_anim(args):
     LABEL_H_ALIGNMENT = 'center'
     LABEL_V_ALIGNMENT = 'top'
     LABEL_SIZE = 40
+    LABEL_FONT = "Nunito Sans"
 
     MARGIN_TOP = 0.15
     MARGIN_LEFT = 0.05
@@ -47,6 +56,14 @@ def plot_anim(args):
     
     
     file_name = PATH.stem
+    font_path = font_by_name(LABEL_FONT)
+    if font_path:
+        font_prop = fm.FontProperties(fname=font_path)
+        plt.rcParams['font.family'] = font_prop.get_name()
+        plt.rcParams['font.sans-serif'] = [font_prop.get_name()]
+        print(f"Loaded font: {font_prop.get_name()}")
+    else:
+        print("Failed to load font")
 
     # Read and process data
     if PATH.suffix.lower() == '.json':
