@@ -1,0 +1,3 @@
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9gAriFy-6pk?si=K29FziiO0gn6utZp" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+Transforms JSON & CSV data with latitude, longitude, and timestamp headers into an animated map, powered by GeoPandas and Matplotlib. See `vid` for a demonstration.
