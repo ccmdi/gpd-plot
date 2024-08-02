@@ -5,7 +5,21 @@ import matplotlib.font_manager as font_manager
 import geopandas as gpd
 import numpy as np
 import argparse
+import json
 from pathlib import Path
+
+def json_coordinates(data):
+    if isinstance(data, list):
+        return pd.DataFrame(data)
+    elif isinstance(data, dict):
+        if 'customCoordinates' in data:
+            return pd.DataFrame(data['customCoordinates'])
+        elif 'coordinates' in data:
+            return pd.DataFrame(data['coordinates'])
+        else:
+            raise ValueError("Unknown JSON structure")
+    else:
+        raise ValueError("Invalid JSON data")
 
 def plot_anim(args):
     # Configuration
@@ -35,10 +49,20 @@ def plot_anim(args):
     file_name = PATH.stem
 
     # Read and process data
-    df = pd.read_csv(PATH, skip_blank_lines=True)
+    if PATH.suffix.lower() == '.json':
+        with open(PATH, 'r') as f:
+            data = json.load(f)
+        df = json_coordinates(data)
+    else:  # Assume CSV for other file types
+        df = pd.read_csv(PATH, skip_blank_lines=True)
+        
+    required_columns = ['timestamp', 'lat', 'lng']
+    if not all(col in df.columns for col in required_columns):
+        raise ValueError(f"Input data must contain columns: {', '.join(required_columns)}")
+
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s').dt.floor('D')
     df = df.sort_values('timestamp')
-    df['date_hour'] = df['timestamp'].apply(lambda x: x.replace(minute=0, second=0))
+    df['date_hour'] = df['timestamp'].apply(lambda x: x.replace(minute=0, second=0)) # Old logic
     date_range = pd.date_range(start=df['date_hour'].min(), end=df['date_hour'].max(), freq='D')
 
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lng, df.lat), crs=FILE_CRS).to_crs(CONVERT_CRS)
@@ -49,8 +73,8 @@ def plot_anim(args):
     # Load and plot basemap
     country = gpd.read_file(ADM1_GEOJSON).set_crs("epsg:4326").to_crs(CONVERT_CRS)
     country.plot(ax=ax, color='none', edgecolor='white', linewidth=0.25)
-    fs = gpd.read_file(ADM2_GEOJSON).set_crs("epsg:4326").to_crs(CONVERT_CRS)
-    fs.plot(ax=ax, edgecolor='white', facecolor='none', linewidth=0.025)
+    subdivisions = gpd.read_file(ADM2_GEOJSON).set_crs("epsg:4326").to_crs(CONVERT_CRS)
+    subdivisions.plot(ax=ax, edgecolor='white', facecolor='none', linewidth=0.025)
 
     # Initialize scatter plot and text
     sc = ax.scatter([], [], s=1)
